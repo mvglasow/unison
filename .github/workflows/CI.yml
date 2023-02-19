@@ -496,17 +496,28 @@ jobs:
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'/bin
 
-    # TODO install a particular OCaml version, disabling opam pin and opam depext
-    # As using an external github action does not work on a cross-platform environment,
-    # we are installing the build dependencies as per https://packages.debian.org/source/sid/unison-2.52
-    # from packages (whatever is current for the version)
-    - name: Install OCaml and other build dependencies
+    # TODO sudo doesn’t work from within the VM yet, therefore split it into a separate step
+    - name: Set up OCaml (stage 1)
       shell: bash
       run: |
         # TODO fix package authentication rather than using --allow-unauthenticated
         # FIXME for some reason using variables does not work
         #sudo chroot '${{ steps.vars.outputs.CROSS_ROOT }}' qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
-        sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
+        #sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
+        sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
+
+    # TODO if sudo apt-get works, enable it (rendering stage 1 obsolete)
+    - name: Set up OCaml ${{ matrix.job.ocaml-version }} (stage 2)
+      shell: bash-wrapper {0}
+      run: |
+        #sudo apt-get -y --allow-unauthenticated install opam
+        opam init -y
+        eval $(opam config env)
+        opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
+        eval $(opam config env)
+        which ocaml
+        ocaml -version
+        opam install opam-depext
 
     - shell: bash-wrapper {0}
       run: |
@@ -536,9 +547,9 @@ jobs:
         ./src/unison -ui text -selftest testr3 socket://{./localsocket/test.sock}/testr4 -killserver
 
     - name: lablgtk install
-      ## [2020-09] non-working/unavailable for MSVC or musl OCaml variants ; also, non-working for 32bit OCaml variant (see [GH:garrigue/lablgtk#64](https://github.com/garrigue/lablgtk/issues/64))
-      ## [2022-01] lablgtk 2.18.12 builds seem to hang on Windows with OCaml < 4.10.0
-      if: ${{ ! ( contains(matrix.job.ocaml-version, '+msvc') || contains(matrix.job.ocaml-version, '+musl') || contains(matrix.job.ocaml-version, '+32bit') ) }}
+      ## [2020-09] non-working for 32bit OCaml variant (see [GH:garrigue/lablgtk#64](https://github.com/garrigue/lablgtk/issues/64))
+      if: ${{ !contains(matrix.job.ocaml-version, '+32bit') }}
+      shell: bash-wrapper {0}
       run: opam depext --install --verbose --yes lablgtk3 && opam install ocamlfind
 
     - if: steps.vars.outputs.STATIC != 'true' ## unable to build static gtk/gui
