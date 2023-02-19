@@ -19,11 +19,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Use OCaml
-      uses: ocaml/setup-ocaml@v2
-      with:
-        ocaml-compiler: 4.14.x
-        opam-depext: false
+    - name: Set up OCaml
+      run: |
+        sudo apt-get install opam
+        opam init -y
+        eval $(opam config env)
+        # Changed from 4.14.x to the latest 4.14 release
+        opam switch create 4.14.1
+        eval $(opam config env)
 
     - run: sudo apt-get install hevea lynx texlive-latex-base
 
@@ -133,6 +136,7 @@ jobs:
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'/bin
 
+    # Currently not used, as we haven’t been able to get MSVC builds to work on GHA yet.
     - name: Enable/config MSVC environment (if/when needed)
       uses: ilammy/msvc-dev-cmd@v1
       with:
@@ -151,7 +155,31 @@ jobs:
       shell: cmd
       run: .\setup-x86_64.exe --quiet-mode --root D:\cygwin --site http://cygwin.mirror.constant.com --symlink-type=sys --packages mingw64-i686-binutils=2.37-2,mingw64-x86_64-binutils=2.37-2
 
-    - name: Use OCaml ${{ matrix.job.ocaml-version }}
+    # Without libtgk-3-dev, opam-switch will fail
+    # opam switch create throws an error on Ubuntu 18.04 but works on 20.04+
+    # Not sure if we need opam-depext (deselected for GHA but lablgtk relies on its presence)
+    - if: contains(matrix.job.os, 'ubuntu')
+      name: Set up OCaml ${{ matrix.job.ocaml-version }} (Linux)
+      run: |
+        sudo apt-get install opam libgtk-3-dev
+        opam init -y
+        eval $(opam config env)
+        opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
+        eval $(opam config env)
+        which ocaml
+        ocaml -version
+        opam install opam-depext
+
+    # In theory, MacOS and Windows setup should be almost identical to Ubuntu, the only difference being the first line
+    # – instead of apt-get, we would use brew on MacOS and CygwinSetup on Windows.
+    # In practice, MacOS seems to be buggy ATM (see https://github.com/ocaml/opam-repository/issues/23358).
+    # On Windows, the major challenge is that GHA’s images come with git-bash, which collides with Cygwin’s bash
+    # and breaks the Cygwin setup – this is a limitation of the GHA image.
+    # Our goal is to use the above setup on all platforms and get rid of the GHA reference, but for now, we are continuing
+    # to use the GHA setup on platforms where that doesn’t work (yet).
+
+    - name: Use OCaml ${{ matrix.job.ocaml-version }} (non-Linux platforms)
+      if: ${{ !contains(matrix.job.os, 'ubuntu') }}
       uses: ocaml/setup-ocaml@v2
       with:
         ocaml-compiler: "${{ steps.vars.outputs.OCAML_COMPILER }}"
@@ -381,12 +409,12 @@ jobs:
         # This list is intended to balance good enough coverage and
         # limited resource usage.
         job:
-        - { os: ubuntu-22.04  , ocaml-version: 4.14.x  , ref: v2.53.0 }
-        - { os: ubuntu-22.04  , ocaml-version: 4.14.x  , ref: v2.52.1 }
-        - { os: ubuntu-22.04  , ocaml-version: 4.14.x  , ref: v2.51.5 }
-        - { os: ubuntu-22.04  , ocaml-version: 4.08.x  , ref: v2.51.5 }
-        - { os: ubuntu-22.04  , ocaml-version: 4.08.x  , ref: v2.51.2 }
-        - { os: ubuntu-22.04  , ocaml-version: 4.08.x  , ref: 2.48.4 }
+        - { os: ubuntu-22.04  , ocaml-version: 4.14.1  , ref: v2.53.0 }
+        - { os: ubuntu-22.04  , ocaml-version: 4.14.1  , ref: v2.52.1 }
+        - { os: ubuntu-22.04  , ocaml-version: 4.14.1  , ref: v2.51.5 }
+        - { os: ubuntu-22.04  , ocaml-version: 4.08.1  , ref: v2.51.5 }
+        - { os: ubuntu-22.04  , ocaml-version: 4.08.1  , ref: v2.51.2 }
+        - { os: ubuntu-22.04  , ocaml-version: 4.08.1  , ref: 2.48.4 }
         - { os: windows-2019  , ocaml-version: ocaml-variants.4.14.0+mingw64c  , ref: v2.53.0 }
         - { os: windows-2019  , ocaml-version: ocaml-variants.4.14.0+mingw64c  , ref: v2.52.1 }
         - { os: windows-2019  , ocaml-version: ocaml-variants.4.08.1+mingw32c  , ref: v2.51.5 }
@@ -404,7 +432,27 @@ jobs:
     - if: contains(matrix.job.os, 'ubuntu')
       run: sudo apt-get update
 
+    - if: contains(matrix.job.os, 'ubuntu')
+      name: Set up OCaml ${{ matrix.job.ocaml-version }} (Linux)
+      run: |
+        sudo apt-get install opam
+        opam init -y
+        eval $(opam config env)
+        opam switch create ${{ matrix.job.ocaml-version }}
+        eval $(opam config env)
+        which ocaml
+        ocaml -version
+
+    # In theory, MacOS and Windows setup should be almost identical to Ubuntu, the only difference being the first line
+    # – instead of apt-get, we would use brew on MacOS and CygwinSetup on Windows.
+    # In practice, MacOS seems to be buggy ATM (see https://github.com/ocaml/opam-repository/issues/23358).
+    # On Windows, the major challenge is that GHA’s images come with git-bash, which collides with Cygwin’s bash
+    # and breaks the Cygwin setup – this is a limitation of the GHA image.
+    # Our goal is to use the above setup on all platforms and get rid of the GHA reference, but for now, we are continuing
+    # to use the GHA setup on platforms where that doesn’t work (yet).
+
     - name: Use OCaml ${{ matrix.job.ocaml-version }}
+      if: ${{ !contains(matrix.job.os, 'ubuntu') }}
       uses: ocaml/setup-ocaml@v2
       with:
         ocaml-compiler: "${{ matrix.job.ocaml-version }}"
@@ -1060,7 +1108,7 @@ jobs:
       fail-fast: false
       matrix:
         job:
-        - { os: ubuntu-22.04   , ocaml-compiler: 4.12.x }
+        - { os: ubuntu-22.04   , ocaml-compiler: 4.12.1 }
         - { os: macos-11       , ocaml-compiler: 4.11.x }
 
     runs-on: ${{ matrix.job.os }}
@@ -1072,12 +1120,36 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - if: contains(matrix.job.os, 'ubuntu')
+      name: Set up OCaml ${{ matrix.job.ocaml-compiler }} (Linux)
+      run: |
+        sudo apt-get install opam
+        # libcairo2-dev libexpat1-dev libgtk-3-dev pkg-config?
+        opam init -y
+        eval $(opam config env)
+        opam switch create ${{ matrix.job.ocaml-compiler }}
+        eval $(opam config env)
+        which ocaml
+        ocaml -version
+        opam install opam-depext
+        opam pin add unison.dev . --no-action
+        opam depext unison
+
+    # In theory, MacOS and Windows setup should be almost identical to Ubuntu, the only difference being the first line
+    # – instead of apt-get, we would use brew on MacOS and CygwinSetup on Windows.
+    # In practice, MacOS seems to be buggy ATM (see https://github.com/ocaml/opam-repository/issues/23358).
+    # On Windows, the major challenge is that GHA’s images come with git-bash, which collides with Cygwin’s bash
+    # and breaks the Cygwin setup – this is a limitation of the GHA image.
+    # Our goal is to use the above setup on all platforms and get rid of the GHA reference, but for now, we are continuing
+    # to use the GHA setup on platforms where that doesn’t work (yet).
+
     - name: Use OCaml ${{ matrix.job.ocaml-compiler }}
+      if: ${{ !contains(matrix.job.os, 'ubuntu') }}
       uses: ocaml/setup-ocaml@v2
       with:
         ocaml-compiler: "${{ matrix.job.ocaml-compiler }}"
 
-    - run: opam install . --deps-only
+    - run: opam install . --deps-only -y
 
     - run: opam exec -- dune build && cp -L ./_build/install/default/bin/unison* ./src/
 
@@ -1088,7 +1160,7 @@ jobs:
       fail-fast: false
       matrix:
         job:
-        - { os: ubuntu-22.04   , ocaml-compiler: 4.14.x }
+        - { os: ubuntu-22.04   , ocaml-compiler: 4.14.1 }
 
     runs-on: ${{ matrix.job.os }}
 
@@ -1099,12 +1171,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Use OCaml ${{ matrix.job.ocaml-compiler }}
-      uses: ocaml/setup-ocaml@v2
-      with:
-        ocaml-compiler: "${{ matrix.job.ocaml-compiler }}"
-        opam-pin: false
-        opam-depext: false
+    - if: contains(matrix.job.os, 'ubuntu')
+      name: Set up OCaml ${{ matrix.job.ocaml-compiler }} (Linux)
+      run: |
+        sudo apt-get install opam
+        opam init -y
+        eval $(opam config env)
+        opam switch create ${{ matrix.job.ocaml-compiler }}
+        eval $(opam config env)
+        which ocaml
+        ocaml -version
 
     - run: opam exec -- make src UISTYLE=text NATIVE=false
 
