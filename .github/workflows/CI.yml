@@ -372,6 +372,233 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
+  cross_build:
+    if: ${{ !cancelled() }}    # Don't fail if 'docs' failed
+    needs: docs
+
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+        - { release: stretch  , arch: armhf  , ocaml-version: 4.14.1  , publish: false }
+        - { release: stretch  , arch: armhf  , ocaml-version: 4.13.1  , publish: false }
+        - { release: stretch  , arch: armhf  , ocaml-version: 4.12.1  , publish: false }
+        - { release: stretch  , arch: armhf  , ocaml-version: 4.11.2  , publish: false }
+        - { release: stretch  , arch: armhf  , ocaml-version: 4.10.2  , publish: false }
+        - { release: stretch  , arch: armhf  , ocaml-version: 4.10.2+musl+static+flambda  , publish: false }
+        - { release: stretch  , arch: armhf  , ocaml-version: 4.09.1  , publish: false }
+        - { release: stretch  , arch: armhf  , ocaml-version: 4.08.1  , publish: false }
+
+    runs-on: ubuntu-22.04
+
+    steps:
+    - run: sudo apt-get update
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Initialize workflow variables
+      id: vars
+      shell: bash
+      run: |
+        outputs() { for var in "$@" ; do echo steps.vars.outputs.${var}="${!var}"; echo ::set-output name=${var}::${!var}; done; }
+        # normalize to pre-compiled ocaml compiler variants for windows/Cygwin (decreases OCaml install time by 50%)
+        case '${{ matrix.job.ocaml-version }}' in
+          *+*) OCAML_COMPILER='ocaml-variants.${{ matrix.job.ocaml-version }}' ;;
+            *) OCAML_COMPILER='ocaml-base-compiler.${{ matrix.job.ocaml-version }}' ;;
+        esac
+        OCAML_VARIANT='${{ matrix.job.ocaml-version }}'
+        outputs OCAML_VARIANT OCAML_COMPILER
+        # architecture/platform vars
+        EXE_suffix=''
+        STATIC='false' ; case '${{ matrix.job.ocaml-version }}' in *+musl*) STATIC='true' ;; esac
+        outputs EXE_suffix STATIC
+        # staging environment
+        STAGING_DIR='_staging'
+        outputs STAGING_DIR
+        # parse commit reference info
+        echo GITHUB_REF=${GITHUB_REF}
+        echo GITHUB_SHA=${GITHUB_SHA}
+        REF_NAME="${GITHUB_REF#refs/*/}"
+        unset REF_BRANCH ; case "${GITHUB_REF}" in refs/heads/*) REF_BRANCH="${GITHUB_REF#refs/heads/}" ;; esac;
+        unset REF_TAG ; case "${GITHUB_REF}" in refs/tags/*) REF_TAG="${GITHUB_REF#refs/tags/}" ;; esac;
+        REF_SHAS="${GITHUB_SHA:0:8}"
+        outputs REF_BRANCH REF_NAME REF_SHAS REF_TAG
+        # deployable tag? (ie, leading "vM" or "M"; M == version number)
+        unset DEPLOY ; if [[ $REF_TAG =~ ^[vV]?[0-9].* ]]; then DEPLOY='true' ; fi
+        outputs DEPLOY
+        # package name
+        PKG_suffix='.tar.gz'
+        PKG_OS='linux'
+        PKG_STATIC='' ; case '${{ matrix.job.ocaml-version }}' in *+static*) PKG_STATIC='.static' ;; esac;
+        PKG_ARCH='armhf'
+        PKG_VER="${REF_TAG:-$REF_SHAS}"
+        PKG_BASENAME="${PROJECT_NAME}-${PKG_VER}+ocaml-${OCAML_VARIANT/%+*/}+${PKG_ARCH}.${PKG_OS}${PKG_STATIC}"
+        PKG_NAME="${PKG_BASENAME}${PKG_suffix}"
+        PKG_DIR="${STAGING_DIR}/${PKG_BASENAME}"
+        outputs PKG_VER PKG_BASENAME PKG_DIR PKG_NAME PKG_OS PKG_suffix
+        COMPRESS_CMD='tar czf';
+        outputs COMPRESS_CMD
+
+    - name: Set up cross-compilation environment
+      shell: bash
+      run: |
+        outputs() { for var in "$@" ; do echo steps.vars.outputs.${var}="${!var}"; echo ::set-output name=${var}::${!var}; done; }
+        CROSS_ROOT="/opt/chroot/${{ matrix.job.arch }}"
+        CROSS_MIRROR="http://deb.debian.org/debian/"
+        outputs CROSS_ROOT CROSS_MIRROR
+        sudo apt-get -y install debootstrap qemu-user-static binfmt-support
+        sudo mkdir -p $CROSS_ROOT
+        sudo debootstrap --variant=buildd --include=fakeroot,build-essential --arch=${{ matrix.job.arch }} --foreign ${{ matrix.job.release }} $CROSS_ROOT $CROSS_MIRROR
+        sudo mkdir -p $CROSS_ROOT/usr/bin
+        # TODO this is not fully portable across all architectures
+        sudo ln /usr/bin/qemu-arm-static $CROSS_ROOT/usr/bin/
+        sudo chroot $CROSS_ROOT ./debootstrap/debootstrap --second-stage
+        # we need to replicate users, groups and home dirs if we’re not running as root
+        sudo ln -f /etc/passwd $CROSS_ROOT/etc/passwd
+        sudo ln -f /etc/group $CROSS_ROOT/etc/group
+        sudo mkdir -p $CROSS_ROOT/$HOME
+        sudo rm -Rf $CROSS_ROOT/$HOME
+        pushd /
+        sudo mv $HOME $CROSS_ROOT/$HOME
+        sudo ln -s $CROSS_ROOT/$HOME $HOME
+        sudo chown `whoami`:`whoami` $HOME
+        popd
+        # debootstrap does not install sudo, and package authentication does not work either
+        # TODO fix package authentication rather than using --allow-unauthenticated
+        sudo chroot $CROSS_ROOT qemu-arm-static /bin/bash -c 'apt-get -y --allow-unauthenticated install sudo'
+        sudo mkdir -p $CROSS_ROOT/etc/sudoers.d
+        echo 'Defaults	lecture = never' | sudo tee $CROSS_ROOT/etc/sudoers.d/lecture
+        sudo chmod 440 $CROSS_ROOT/etc/sudoers.d/lecture
+        sudo ln -f /etc/sudoers $CROSS_ROOT/etc/sudoers
+        # TODO disable password prompt
+        # prepare bash wrapper
+        sudo cp .github/bash-wrapper /bin/
+        sudo chown root:root /bin/bash-wrapper
+        sudo chmod a+x /bin/bash-wrapper
+        # TODO remove after debug
+        set
+        whoami
+        ls -la $CROSS_ROOT
+        sudo chroot --userspec=`whoami`:`whoami` $CROSS_ROOT qemu-arm-static /bin/bash -c 'echo Running as $(whoami)'
+        sudo chroot --userspec=`whoami`:`whoami` $CROSS_ROOT qemu-arm-static /bin/bash -c 'echo Target platform is $(uname -a)'
+        echo "Testing bash-wrapper in `which bash-wrapper`"
+        bash-wrapper 'echo Running as $(whoami)'
+        bash-wrapper 'echo Target platform is $(uname -a)'
+
+    - name: Test bash-wrapper
+      shell: bash-wrapper {0}
+      run: |
+        echo Running as $(whoami)
+        echo Target platform is $(uname -a)
+        which sudo || echo sudo not found
+
+    # TODO move the actual build into the QEMU environment
+    - name: Create/configure any needed build/workspace
+      shell: bash
+      run: |
+        # create build/work space
+        mkdir -p '${{ steps.vars.outputs.STAGING_DIR }}'
+        mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'
+        mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'/bin
+
+    # TODO install a particular OCaml version, disabling opam pin and opam depext
+    # As using an external github action does not work on a cross-platform environment,
+    # we are installing the build dependencies as per https://packages.debian.org/source/sid/unison-2.52
+    # from packages (whatever is current for the version)
+    - name: Install OCaml and other build dependencies
+      shell: bash
+      run: |
+        # TODO fix package authentication rather than using --allow-unauthenticated
+        # FIXME for some reason using variables does not work
+        #sudo chroot '${{ steps.vars.outputs.CROSS_ROOT }}' qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
+        sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
+
+    - shell: bash-wrapper {0}
+      run: |
+        opam exec -- make src OSTYPE=$OSTYPE UISTYLE=text STATIC=${{ steps.vars.outputs.STATIC }}
+        # stage
+        # * notes: darwin/macos doesn't build `unison-fsmonitor`
+        for file in ${PROJECT_EXES} ; do
+          if [ -f "src/${file}${{ steps.vars.outputs.EXE_suffix }}" ]; then
+            cp "src/${file}${{ steps.vars.outputs.EXE_suffix }}" '${{ steps.vars.outputs.PKG_DIR }}/bin'
+            echo "'src/${file}${{ steps.vars.outputs.EXE_suffix }}' copied to '${{ steps.vars.outputs.PKG_DIR }}/bin'"
+          fi
+        done
+
+    - shell: bash-wrapper {0}
+      run: opam exec -- make test
+
+    - name: Run self-tests over local socket
+      shell: bash-wrapper {0}
+      run: |
+        mkdir localsocket
+        chmod 700 localsocket
+        # Separate backup dir must be set for server instance so that the central
+        # backup location of both instances doesn't overlap
+        UNISONBACKUPDIR=./src/testbak4 ./src/unison -socket ./localsocket/test.sock &
+        sleep 1 # Wait for the server to be fully started
+        test -S ./localsocket/test.sock
+        ./src/unison -ui text -selftest testr3 socket://{./localsocket/test.sock}/testr4 -killserver
+
+    - name: lablgtk install
+      ## [2020-09] non-working/unavailable for MSVC or musl OCaml variants ; also, non-working for 32bit OCaml variant (see [GH:garrigue/lablgtk#64](https://github.com/garrigue/lablgtk/issues/64))
+      ## [2022-01] lablgtk 2.18.12 builds seem to hang on Windows with OCaml < 4.10.0
+      if: ${{ ! ( contains(matrix.job.ocaml-version, '+msvc') || contains(matrix.job.ocaml-version, '+musl') || contains(matrix.job.ocaml-version, '+32bit') ) }}
+      run: opam depext --install --verbose --yes lablgtk3 && opam install ocamlfind
+
+    - if: steps.vars.outputs.STATIC != 'true' ## unable to build static gtk/gui
+      shell: bash-wrapper {0}
+      run: |
+        opam exec -- make src OSTYPE=$OSTYPE UISTYLE=gtk3 STATIC=${{ steps.vars.outputs.STATIC }}
+        # stage
+        # * copy only main/first project binary
+        project_exe_stem=${PROJECT_EXES%% *}
+        cp "src/${project_exe_stem}${{ steps.vars.outputs.EXE_suffix }}" "${{ steps.vars.outputs.PKG_DIR }}/bin/${project_exe_stem}-gui${{ steps.vars.outputs.EXE_suffix }}"
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: unison-${{ steps.vars.outputs.REF_SHAS }}.ocaml-${{ matrix.job.ocaml-version }}.${{ matrix.job.release }}
+        path: ${{ steps.vars.outputs.PKG_DIR }}/bin/*
+
+    - name: Copy user manual
+      continue-on-error: ${{ !(steps.vars.outputs.DEPLOY && matrix.job.publish) }}
+      uses: actions/download-artifact@v2
+      with:
+        name: unison-docs
+        path: '${{ steps.vars.outputs.PKG_DIR }}'
+
+    - name: Prepare package
+      # if: steps.vars.outputs.DEPLOY
+      shell: bash-wrapper {0}
+      run: |
+        ## package artifact(s)
+        PKG_DIR='${{ steps.vars.outputs.PKG_DIR }}'
+        # `strip` binaries
+        strip "${PKG_DIR}/bin"/*'${{ steps.vars.outputs.EXE_suffix }}'
+        # README and LICENSE
+        (shopt -s nullglob; for f in [R]'EADME'{,.*}; do cp $f "${PKG_DIR}"/ ; done)
+        (shopt -s nullglob; for f in [L]'ICENSE'{-*,}{,.*}; do cp $f "${PKG_DIR}"/ ; done)
+
+    - name: Package
+      shell: bash
+      run: cd '${{ steps.vars.outputs.PKG_DIR }}/' && ${{ steps.vars.outputs.COMPRESS_CMD }} '../${{ steps.vars.outputs.PKG_NAME }}' *
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: unison-${{ steps.vars.outputs.REF_SHAS }}.ocaml-${{ matrix.job.ocaml-version }}.${{ matrix.job.release }}-publish
+        path: ${{ steps.vars.outputs.STAGING_DIR }}/${{ steps.vars.outputs.PKG_NAME }}
+
+    - name: Publish
+      if: steps.vars.outputs.DEPLOY && matrix.job.publish
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ${{ steps.vars.outputs.STAGING_DIR }}/${{ steps.vars.outputs.PKG_NAME }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
   rpc_abicheck:
     needs: build
 

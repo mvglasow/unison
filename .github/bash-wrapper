@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# Wrapper to run bash in a chrooted QEMU user environment
+
+# FIXME get variables from outside
+CROSS_ROOT=/opt/chroot/armhf
+
+# FIXME for some reasons, GHA passes scripts but does not set the executable flag,
+# so we need to work around this.
+test -f $1 && sudo chmod a+x $1
+
+sudo chroot --userspec=`whoami`:`whoami` $CROSS_ROOT qemu-arm-static /bin/bash -c "cd $GITHUB_WORKSPACE; $*"
+
