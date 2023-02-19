@@ -374,20 +374,14 @@ jobs:
 
   cross_build:
     if: ${{ !cancelled() }}    # Don't fail if 'docs' failed
-    needs: docs
+    # Disable dependency for now, allowing us to start faster
+    # needs: docs
 
     strategy:
       fail-fast: false
       matrix:
         job:
         - { release: stretch  , arch: armhf  , ocaml-version: 4.14.1  , publish: false }
-        - { release: stretch  , arch: armhf  , ocaml-version: 4.13.1  , publish: false }
-        - { release: stretch  , arch: armhf  , ocaml-version: 4.12.1  , publish: false }
-        - { release: stretch  , arch: armhf  , ocaml-version: 4.11.2  , publish: false }
-        - { release: stretch  , arch: armhf  , ocaml-version: 4.10.2  , publish: false }
-        - { release: stretch  , arch: armhf  , ocaml-version: 4.10.2+musl+static+flambda  , publish: false }
-        - { release: stretch  , arch: armhf  , ocaml-version: 4.09.1  , publish: false }
-        - { release: stretch  , arch: armhf  , ocaml-version: 4.08.1  , publish: false }
 
     runs-on: ubuntu-22.04
 
