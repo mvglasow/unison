@@ -513,7 +513,7 @@ jobs:
       shell: bash-wrapper {0}
       run: |
         #sudo apt-get -y --allow-unauthenticated install opam
-        opam init -y
+        opam init -y github git+https://github.com/ocaml/opam-repository.git
         eval $(opam config env)
         opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
         eval $(opam config env)
