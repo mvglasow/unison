@@ -486,6 +486,8 @@ jobs:
         echo -n 'Path to sudo: '
         which sudo || echo not found
         set
+        echo "Certs in /etc/ssl/certs:"
+        ls -lah /etc/ssl/certs || echo not found
 
     # TODO move the actual build into the QEMU environment
     - name: Create/configure any needed build/workspace
