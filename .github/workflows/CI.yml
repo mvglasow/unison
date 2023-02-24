@@ -514,8 +514,7 @@ jobs:
       run: |
         #sudo apt-get -y --allow-unauthenticated install opam
         # FIXME debug
-        date
-        curl -v https://opam.ocaml.org/urls.txt
+        ls -la /proc/sys/kernel/ || ls -la /proc/sys/ || ls -la /proc/ || echo /proc not found
         opam init -y
         eval $(opam config env)
         opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
