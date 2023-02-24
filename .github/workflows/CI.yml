@@ -504,9 +504,9 @@ jobs:
       run: |
         # TODO fix package authentication rather than using --allow-unauthenticated
         # FIXME for some reason using variables does not work
-        #sudo chroot '${{ steps.vars.outputs.CROSS_ROOT }}' qemu-arm-static /bin/bash -c ' apt-get -y install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
-        #sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
-        sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y install librsvg2-bin imagemagick opam libgtk-3-dev'
+        #sudo chroot '${{ steps.vars.outputs.CROSS_ROOT }}' qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
+        #sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
+        sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
 
     # TODO if sudo apt-get works, enable it (rendering stage 1 obsolete)
     - name: Set up OCaml ${{ matrix.job.ocaml-version }} (stage 2)
