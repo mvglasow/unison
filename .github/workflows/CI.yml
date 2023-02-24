@@ -483,6 +483,7 @@ jobs:
         echo Target platform is $(uname -a)
         echo -n 'Path to sudo: '
         which sudo || echo not found
+        mount | grep proc
         set
 
     # TODO move the actual build into the QEMU environment
