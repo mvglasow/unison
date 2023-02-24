@@ -446,8 +446,8 @@ jobs:
         sudo debootstrap --variant=buildd --include=fakeroot,build-essential,ca-certificates,debian-archive-keyring,git,sudo --arch=${{ matrix.job.arch }} --foreign ${{ matrix.job.release }} $CROSS_ROOT $CROSS_MIRROR
         sudo mount -B /dev $CROSS_ROOT/dev
         sudo mount -B /dev/pts $CROSS_ROOT/dev/pts
-        sudo mount -B /proc $CROSS_ROOT/proc
-        sudo mount -B /sys $CROSS_ROOT/sys
+        sudo mount -t proc /proc $CROSS_ROOT/proc
+        sudo mount -t sysfs /sys $CROSS_ROOT/sys
         sudo mkdir -p $CROSS_ROOT/usr/bin
         # TODO this is not fully portable across all architectures
         sudo ln /usr/bin/qemu-arm-static $CROSS_ROOT/usr/bin/
