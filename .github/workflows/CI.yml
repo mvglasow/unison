@@ -443,7 +443,7 @@ jobs:
         outputs CROSS_ROOT CROSS_MIRROR
         sudo apt-get -y install debootstrap qemu-user-static binfmt-support
         sudo mkdir -p $CROSS_ROOT
-        sudo debootstrap --variant=buildd --include=fakeroot,build-essential,debian-archive-keyring,sudo --arch=${{ matrix.job.arch }} --foreign ${{ matrix.job.release }} $CROSS_ROOT $CROSS_MIRROR
+        sudo debootstrap --variant=buildd --include=fakeroot,build-essential,ca-certificates,debian-archive-keyring,git,sudo --arch=${{ matrix.job.arch }} --foreign ${{ matrix.job.release }} $CROSS_ROOT $CROSS_MIRROR
         sudo mkdir -p $CROSS_ROOT/usr/bin
         # TODO this is not fully portable across all architectures
         sudo ln /usr/bin/qemu-arm-static $CROSS_ROOT/usr/bin/
@@ -513,7 +513,7 @@ jobs:
       shell: bash-wrapper {0}
       run: |
         #sudo apt-get -y --allow-unauthenticated install opam
-        opam init -y -verbose
+        opam init -y -verbose github git+https://github.com/ocaml/opam-repository.git
         eval $(opam config env)
         opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
         eval $(opam config env)
