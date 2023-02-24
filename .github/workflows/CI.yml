@@ -472,14 +472,8 @@ jobs:
         sudo chown root:root /bin/bash-wrapper
         sudo chmod a+x /bin/bash-wrapper
         # TODO remove after debug
-        set
-        whoami
-        ls -la $CROSS_ROOT
-        sudo chroot --userspec=`whoami`:`whoami` $CROSS_ROOT qemu-arm-static /bin/bash -c 'echo Running as $(whoami)'
-        sudo chroot --userspec=`whoami`:`whoami` $CROSS_ROOT qemu-arm-static /bin/bash -c 'echo Target platform is $(uname -a)'
-        echo "Testing bash-wrapper in `which bash-wrapper`"
-        bash-wrapper 'echo Running as $(whoami)'
-        bash-wrapper 'echo Target platform is $(uname -a)'
+        mount | grep proc
+        ls -la /proc/sys/kernel/ || ls -la /proc/sys/ || ls -la /proc/ || echo /proc not found
 
     - name: Test bash-wrapper
       shell: bash-wrapper {0}
