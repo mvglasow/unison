@@ -514,6 +514,7 @@ jobs:
       run: |
         #sudo apt-get -y --allow-unauthenticated install opam
         # FIXME debug
+        date
         curl -v https://opam.ocaml.org/urls.txt
         opam init -y -verbose github git+https://github.com/ocaml/opam-repository.git
         eval $(opam config env)
