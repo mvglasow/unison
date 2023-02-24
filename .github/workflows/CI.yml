@@ -381,7 +381,7 @@ jobs:
       fail-fast: false
       matrix:
         job:
-        - { release: stretch  , arch: armhf  , ocaml-version: 4.14.1  , publish: false }
+        - { release: buster  , arch: armhf  , ocaml-version: 4.14.1  , publish: false }
 
     runs-on: ubuntu-22.04
 
@@ -516,7 +516,7 @@ jobs:
         # FIXME debug
         date
         curl -v https://opam.ocaml.org/urls.txt
-        opam init -y -verbose github git+https://github.com/ocaml/opam-repository.git
+        opam init -y
         eval $(opam config env)
         opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
         eval $(opam config env)
