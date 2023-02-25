@@ -496,7 +496,7 @@ jobs:
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'/bin
 
-    # TODO sudo doesn’t work from within the VM yet, therefore split it into a separate step
+    # TODO install these packages with debootstrap and get rid of this step
     - name: Set up OCaml (stage 1)
       shell: bash
       run: |
