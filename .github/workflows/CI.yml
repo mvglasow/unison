@@ -473,6 +473,7 @@ jobs:
         sudo chmod a+x /bin/bash-wrapper
         # TODO remove after debug
         mount | grep proc
+        ls -la $CROSS_ROOT/proc || echo $CROSS_ROOT/proc not found
 
     - name: Test bash-wrapper
       shell: bash-wrapper {0}
