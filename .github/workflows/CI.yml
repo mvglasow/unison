@@ -569,6 +569,7 @@ jobs:
         # * copy only main/first project binary
         project_exe_stem=${PROJECT_EXES%% *}
         # TODO debug
+        ls -la src/ || echo src not found
         echo cp "src/${project_exe_stem}${{ steps.vars.outputs.EXE_suffix }}" "${{ steps.vars.outputs.PKG_DIR }}/bin/${project_exe_stem}-gui${{ steps.vars.outputs.EXE_suffix }}"
         cp "src/${project_exe_stem}${{ steps.vars.outputs.EXE_suffix }}" "${{ steps.vars.outputs.PKG_DIR }}/bin/${project_exe_stem}-gui${{ steps.vars.outputs.EXE_suffix }}"
 
