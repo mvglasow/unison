@@ -449,10 +449,6 @@ jobs:
         sudo ln /usr/bin/qemu-arm-static $CROSS_ROOT/usr/bin/
         sudo chroot $CROSS_ROOT ./debootstrap/debootstrap --second-stage
         # don’t mount these until after the second stage of debootstrap has finished
-        #mkdir -p $CROSS_ROOT/dev
-        #sudo mount -B /dev $CROSS_ROOT/dev
-        #mkdir -p $CROSS_ROOT/dev/pts
-        #sudo mount -B /dev/pts $CROSS_ROOT/dev/pts
         mkdir -p $CROSS_ROOT/proc
         sudo mount -B /proc $CROSS_ROOT/proc
         mkdir -p $CROSS_ROOT/sys
@@ -467,26 +463,16 @@ jobs:
         sudo ln -s $CROSS_ROOT/$HOME $HOME
         sudo chown `whoami`:`whoami` $HOME
         popd
-        # TODO sudo can be skipped for now as we don’t use it
+        # TODO as long as we don’t use sudo, this part can be skipped
         sudo mkdir -p $CROSS_ROOT/etc/sudoers.d
         echo 'Defaults	lecture = never' | sudo tee $CROSS_ROOT/etc/sudoers.d/lecture
         sudo chmod 440 $CROSS_ROOT/etc/sudoers.d/lecture
         sudo ln -f /etc/sudoers $CROSS_ROOT/etc/sudoers
-        # TODO disable password prompt
+        # TODO disable sudo password prompt
         # prepare bash wrapper
         sudo cp .github/bash-wrapper /bin/
         sudo chown root:root /bin/bash-wrapper
         sudo chmod a+x /bin/bash-wrapper
-
-    - name: Test bash-wrapper
-      shell: bash-wrapper {0}
-      run: |
-        echo Running as $(whoami) in $(pwd)
-        whoami
-        echo Target platform is $(uname -a)
-        echo -n 'Path to sudo: '
-        which sudo || echo not found
-        mount | grep proc
 
     - name: Create/configure any needed build/workspace
       shell: bash
@@ -496,18 +482,18 @@ jobs:
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'/bin
 
-    # TODO including these in debootstrap fails for some reason
-    - name: Set up OCaml (stage 1)
+    # TODO including these packages in debootstrap fails for some reason
+    # and to run sudo apt-get inside the chroot, we need to disable the password prompt.
+    # If we can fix either of these, we can merge the step into one of the others.
+    - name: Install opam and build dependencies
       shell: bash
       run: |
         # TODO fix package authentication rather than using --allow-unauthenticated
         # FIXME for some reason using variables does not work
-        #sudo chroot '${{ steps.vars.outputs.CROSS_ROOT }}' qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
-        #sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
+        #sudo chroot '${{ steps.vars.outputs.CROSS_ROOT }}' qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
         sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
 
-    # TODO if sudo apt-get works, enable it (rendering stage 1 obsolete)
-    - name: Set up OCaml ${{ matrix.job.ocaml-version }} (stage 2)
+    - name: Set up OCaml ${{ matrix.job.ocaml-version }}
       shell: bash-wrapper {0}
       run: |
         #sudo apt-get -y --allow-unauthenticated install opam
