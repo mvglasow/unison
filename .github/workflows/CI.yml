@@ -476,9 +476,6 @@ jobs:
         sudo cp .github/bash-wrapper /bin/
         sudo chown root:root /bin/bash-wrapper
         sudo chmod a+x /bin/bash-wrapper
-        # TODO remove after debug
-        mount | grep proc
-        ls -la $CROSS_ROOT/proc || echo $CROSS_ROOT/proc not found
 
     - name: Test bash-wrapper
       shell: bash-wrapper {0}
@@ -489,7 +486,6 @@ jobs:
         echo -n 'Path to sudo: '
         which sudo || echo not found
         mount | grep proc
-        set
 
     # TODO move the actual build into the QEMU environment
     - name: Create/configure any needed build/workspace
@@ -515,8 +511,6 @@ jobs:
       shell: bash-wrapper {0}
       run: |
         #sudo apt-get -y --allow-unauthenticated install opam
-        # FIXME debug
-        ls -la /proc/sys/kernel/ || ls -la /proc/sys/ || ls -la /proc/ || echo /proc not found
         opam init -y
         eval $(opam config env)
         opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
