@@ -551,7 +551,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: unison-${{ steps.vars.outputs.REF_SHAS }}.ocaml-${{ matrix.job.ocaml-version }}.${{ matrix.job.release }}
+        name: unison-${{ steps.vars.outputs.REF_SHAS }}.ocaml-${{ matrix.job.ocaml-version }}.${{ matrix.job.release }}.${{ matrix.job.arch }}
         path: ${{ steps.vars.outputs.PKG_DIR }}/bin/*
 
     - name: Copy user manual
@@ -579,7 +579,7 @@ jobs:
 
     - uses: actions/upload-artifact@v2
       with:
-        name: unison-${{ steps.vars.outputs.REF_SHAS }}.ocaml-${{ matrix.job.ocaml-version }}.${{ matrix.job.release }}-publish
+        name: unison-${{ steps.vars.outputs.REF_SHAS }}.ocaml-${{ matrix.job.ocaml-version }}.${{ matrix.job.release }}.${{ matrix.job.arch }}-publish
         path: ${{ steps.vars.outputs.STAGING_DIR }}/${{ steps.vars.outputs.PKG_NAME }}
 
     - name: Publish
