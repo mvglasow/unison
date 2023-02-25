@@ -544,9 +544,6 @@ jobs:
         # stage
         # * copy only main/first project binary
         project_exe_stem=${PROJECT_EXES%% *}
-        # TODO debug
-        # this should be cp src/unison _staging/unison-e657dd8c+ocaml-4.14.0+x86_64.linux/bin/unison-gui
-        echo cp "src/${project_exe_stem}${{ steps.vars.outputs.EXE_suffix }}" "${{ steps.vars.outputs.PKG_DIR }}/bin/${project_exe_stem}-gui${{ steps.vars.outputs.EXE_suffix }}"
         cp "src/${project_exe_stem}${{ steps.vars.outputs.EXE_suffix }}" "${{ steps.vars.outputs.PKG_DIR }}/bin/${project_exe_stem}-gui${{ steps.vars.outputs.EXE_suffix }}"
 
     - uses: actions/upload-artifact@v2
