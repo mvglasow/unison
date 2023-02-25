@@ -543,9 +543,7 @@ jobs:
         opam exec -- make src OSTYPE=$OSTYPE UISTYLE=gtk3 STATIC=${{ steps.vars.outputs.STATIC }}
         # stage
         # * copy only main/first project binary
-        # FIXME bash-wrapper has issues processing PROJECT_EXES, hardcode as a workaround
-        project_exe_stem=unison
-        #project_exe_stem=${PROJECT_EXES%% *}
+        project_exe_stem=${PROJECT_EXES%% *}
         # TODO debug
         # this should be cp src/unison _staging/unison-e657dd8c+ocaml-4.14.0+x86_64.linux/bin/unison-gui
         echo cp "src/${project_exe_stem}${{ steps.vars.outputs.EXE_suffix }}" "${{ steps.vars.outputs.PKG_DIR }}/bin/${project_exe_stem}-gui${{ steps.vars.outputs.EXE_suffix }}"
