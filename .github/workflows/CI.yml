@@ -434,7 +434,7 @@ jobs:
         COMPRESS_CMD='tar czf';
         outputs COMPRESS_CMD
 
-    - name: Set up cross-compilation environment
+    - name: Set up foreign chroot for ${{ matrix.job.arch }}
       shell: bash
       run: |
         outputs() { for var in "$@" ; do echo steps.vars.outputs.${var}="${!var}"; echo ::set-output name=${var}::${!var}; done; }
