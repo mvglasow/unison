@@ -443,7 +443,8 @@ jobs:
         outputs CROSS_ROOT CROSS_MIRROR
         sudo apt-get -y install debootstrap qemu-user-static binfmt-support
         sudo mkdir -p $CROSS_ROOT
-        sudo debootstrap --variant=buildd --include=fakeroot,build-essential,ca-certificates,debian-archive-keyring,git,sudo --arch=${{ matrix.job.arch }} --foreign ${{ matrix.job.release }} $CROSS_ROOT $CROSS_MIRROR
+        # alternatively, skip libgtk-3-dev and install dh-ocaml,liblablgtk2-ocaml-dev,ocaml
+        sudo debootstrap --variant=buildd --include=fakeroot,build-essential,ca-certificates,debian-archive-keyring,git,libgtk-3-dev,librsvg2-bin,opam,sudo,imagemagick --arch=${{ matrix.job.arch }} --foreign ${{ matrix.job.release }} $CROSS_ROOT $CROSS_MIRROR
         sudo mkdir -p $CROSS_ROOT/usr/bin
         # TODO this is not fully portable across all architectures
         sudo ln /usr/bin/qemu-arm-static $CROSS_ROOT/usr/bin/
@@ -496,18 +497,7 @@ jobs:
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'/bin
 
-    # TODO install these packages with debootstrap and get rid of this step
-    - name: Set up OCaml (stage 1)
-      shell: bash
-      run: |
-        # TODO fix package authentication rather than using --allow-unauthenticated
-        # FIXME for some reason using variables does not work
-        #sudo chroot '${{ steps.vars.outputs.CROSS_ROOT }}' qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
-        #sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install ocaml liblablgtk2-ocaml-dev librsvg2-bin imagemagick dh-ocaml opam'
-        sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
-
-    # TODO if sudo apt-get works, enable it (rendering stage 1 obsolete)
-    - name: Set up OCaml ${{ matrix.job.ocaml-version }} (stage 2)
+    - name: Set up OCaml ${{ matrix.job.ocaml-version }}
       shell: bash-wrapper {0}
       run: |
         #sudo apt-get -y --allow-unauthenticated install opam
