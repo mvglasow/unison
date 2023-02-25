@@ -468,6 +468,7 @@ jobs:
         sudo ln -s $CROSS_ROOT/$HOME $HOME
         sudo chown `whoami`:`whoami` $HOME
         popd
+        # TODO sudo can be skipped for now as we don’t use it
         sudo mkdir -p $CROSS_ROOT/etc/sudoers.d
         echo 'Defaults	lecture = never' | sudo tee $CROSS_ROOT/etc/sudoers.d/lecture
         sudo chmod 440 $CROSS_ROOT/etc/sudoers.d/lecture
@@ -501,6 +502,7 @@ jobs:
       shell: bash-wrapper {0}
       run: |
         #sudo apt-get -y --allow-unauthenticated install opam
+        # Disable sandboxing as bwrap errors out on this setup
         opam init -y --disable-sandboxing
         eval $(opam config env)
         opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
