@@ -162,7 +162,7 @@ jobs:
       name: Set up OCaml ${{ matrix.job.ocaml-version }} (Linux)
       run: |
         sudo apt-get install opam libgtk-3-dev
-        opam init -y
+        opam init -y --disable-sandboxing
         eval $(opam config env)
         opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
         eval $(opam config env)
