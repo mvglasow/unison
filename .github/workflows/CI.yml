@@ -511,20 +511,12 @@ jobs:
       shell: bash-wrapper {0}
       run: |
         #sudo apt-get -y --allow-unauthenticated install opam
-        echo -n "********** "
-        date
         # Disable sandboxing as bwrap errors out on this setup
         opam init -y --disable-sandboxing
         eval $(opam config env)
-        echo -n "********** "
-        date
         opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
         eval $(opam config env)
-        echo -n "********** "
-        date
         opam install opam-depext
-        echo -n "********** "
-        date
 
     - shell: bash-wrapper {0}
       run: |
