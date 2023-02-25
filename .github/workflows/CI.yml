@@ -438,9 +438,11 @@ jobs:
       shell: bash
       run: |
         # TODO remove after debug
+        echo Trying to remount /proc as /tmp/proc...
         mkdir -p /tmp/proc
         sudo mount -B /proc /tmp/proc
         mount | grep proc
+        echo ...done
         # end debug
         outputs() { for var in "$@" ; do echo steps.vars.outputs.${var}="${!var}"; echo ::set-output name=${var}::${!var}; done; }
         CROSS_ROOT="/opt/chroot/${{ matrix.job.arch }}"
