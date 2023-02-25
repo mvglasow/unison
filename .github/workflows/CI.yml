@@ -444,21 +444,19 @@ jobs:
         sudo apt-get -y install debootstrap qemu-user-static binfmt-support
         sudo mkdir -p $CROSS_ROOT
         sudo debootstrap --variant=buildd --include=fakeroot,build-essential,ca-certificates,debian-archive-keyring,git,sudo --arch=${{ matrix.job.arch }} --foreign ${{ matrix.job.release }} $CROSS_ROOT $CROSS_MIRROR
-        sudo mount -B /dev $CROSS_ROOT/dev
-        sudo mount -B /dev/pts $CROSS_ROOT/dev/pts
-        # TODO debug
-        echo Trying to remount /proc as $CROSS_ROOT/proc...
-        mkdir -p $CROSS_ROOT/proc
-        sudo mount -B /proc $CROSS_ROOT/proc
-        mount | grep proc
-        echo ...done
-        # end debug
-        #sudo mount -t proc /proc $CROSS_ROOT/proc
-        sudo mount -t sysfs /sys $CROSS_ROOT/sys
         sudo mkdir -p $CROSS_ROOT/usr/bin
         # TODO this is not fully portable across all architectures
         sudo ln /usr/bin/qemu-arm-static $CROSS_ROOT/usr/bin/
         sudo chroot $CROSS_ROOT ./debootstrap/debootstrap --second-stage
+        # don’t mount these until after the second stage of debootstrap has finished
+        #mkdir -p $CROSS_ROOT/dev
+        #sudo mount -B /dev $CROSS_ROOT/dev
+        #mkdir -p $CROSS_ROOT/dev/pts
+        #sudo mount -B /dev/pts $CROSS_ROOT/dev/pts
+        mkdir -p $CROSS_ROOT/proc
+        sudo mount -B /proc $CROSS_ROOT/proc
+        mkdir -p $CROSS_ROOT/sys
+        sudo mount -B /sys $CROSS_ROOT/sys
         # we need to replicate users, groups and home dirs if we’re not running as root
         sudo ln -f /etc/passwd $CROSS_ROOT/etc/passwd
         sudo ln -f /etc/group $CROSS_ROOT/etc/group
