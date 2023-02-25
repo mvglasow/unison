@@ -9,5 +9,5 @@ CROSS_ROOT=/opt/chroot/armhf
 # so we need to work around this.
 test -f $1 && sudo chmod a+x $1
 
-sudo chroot --userspec=`whoami`:`whoami` $CROSS_ROOT qemu-arm-static /bin/bash -c "export HOME=$HOME; export PROJECT_EXES=$PROJECT_EXES; export USER=$USER; cd $GITHUB_WORKSPACE; $*"
+sudo chroot --userspec=`whoami`:`whoami` $CROSS_ROOT qemu-arm-static /bin/bash -c "export HOME=$HOME; export PROJECT_EXES=\"$PROJECT_EXES\"; export USER=$USER; cd $GITHUB_WORKSPACE; $*"
 
