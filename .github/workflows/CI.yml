@@ -520,8 +520,6 @@ jobs:
         date
         opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
         eval $(opam config env)
-        which ocaml
-        ocaml -version
         echo -n "********** "
         date
         opam install opam-depext
