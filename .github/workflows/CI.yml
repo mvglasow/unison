@@ -381,17 +381,19 @@ jobs:
       fail-fast: false
       matrix:
         job:
-        # arch can be one of the following: arm64, armhf, amd64, i386, mips64el, mipsel, ppc64el, s390x
+        # arch can be one of the following: arm64, armhf, amd64, i386, ppc64el, s390x
         # (currently except for the host architecture, normally amd64)
-        - { arch: arm64   , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
-        - { arch: armhf   , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
-        - { arch: amd64   , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
-        - { arch: i386    , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
-        - { arch: m68k    , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
-        - { arch: mips64el, ocaml-version: 4.14.0  , release: bullseye  , publish: true }
-        - { arch: mipsel  , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
-        - { arch: ppc64el , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
-        - { arch: s390x   , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
+        # mips64el, mipsel are not supported due to lack of a native OCaml compiler
+        # (although the rest of the VM environment is available)
+        - { arch: arm64   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        - { arch: armhf   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        - { arch: amd64   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        - { arch: i386    , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        - { arch: m68k    , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        - { arch: mips64el, ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        - { arch: mipsel  , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        - { arch: ppc64el , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        - { arch: s390x   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
 
     runs-on: ubuntu-22.04
 
