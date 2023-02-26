@@ -381,6 +381,8 @@ jobs:
       fail-fast: false
       matrix:
         job:
+        # arch can be one of the following: arm64, armhf, amd64, i386, mips64el, mipsel, ppc64el, s390x
+        # (currently except for the host architecture, normally amd64)
         - { arch: arm64   , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
         - { arch: armhf   , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
         - { arch: amd64   , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
