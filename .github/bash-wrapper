@@ -12,6 +12,8 @@
 #
 #   This script can be passed as a custom shell in order to run shell commands in a foreign chroot rather
 #   than on the host platform. The architecture must be specified in the CROSS_ARCH environment variable.
+#   For this purpose, architecture names are as used by the operating system’s package manager (and reported
+#   by dpkg --print-architecture).
 #
 # BUGS
 #
@@ -22,8 +24,7 @@ CROSS_ROOT=/opt/chroot/$CROSS_ARCH
 
 # qemu-user-static binary names uses nonstandard arch names, therefore we need to map names explicitly
 case $CROSS_ARCH in
-  # FIXME this does not work as amd64 reports x86_64
-  $(uname -i))
+  $(dpkg --print-architecture))
     echo "$CROSS_ARCH is the host architecture." > /dev/stderr
     echo "This is currently not supported." > /dev/stderr
     echo "However, you can run this command directly on the host machine." > /dev/stderr
