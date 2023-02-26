@@ -2,7 +2,7 @@
 #
 # NAME
 #
-#   bash-armhf - wrapper to run bash in a chrooted QEMU user environment.
+#   bash-wrapper - wrapper to run bash in a chrooted QEMU user environment.
 #
 # SYNOPSIS
 #
@@ -10,16 +10,13 @@
 #
 # DESCRIPTION
 #
-#   This script can be passed as a custom shell in order to run shell commands in a foreign chroot
-#   rather than on the host platform. The architecture is inferred from the name with which the script
-#   is called.
+#   This script can be passed as a custom shell in order to run shell commands in a foreign chroot rather
+#   than on the host platform. The architecture must be specified in the CROSS_ARCH environment variable.
 #
 # BUGS
 #
 #   Only a handful environment variables (HOME, PROJECT_EXES, USER) are passed at the moment. Special character
 #   handling in environment variables is broken. This can be fixed by modifying the script itself.
-
-CROSS_ARCH=$(echo $0|sed "s/.*\///")
 
 # TODO remove after debug
 echo bash wrapper for $CROSS_ARCH
