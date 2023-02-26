@@ -382,7 +382,7 @@ jobs:
       matrix:
         job:
         - { release: bullseye  , arch: armhf  , ocaml-version: 4.14.0  , publish: true }
-        - { release: bullseye  , arch: x86_64  , ocaml-version: 4.14.0  , publish: true }
+        - { release: bullseye  , arch: amd64  , ocaml-version: 4.14.0  , publish: true }
         - { release: bullseye  , arch: mipsel  , ocaml-version: 4.14.0  , publish: true }
 
     runs-on: ubuntu-22.04
