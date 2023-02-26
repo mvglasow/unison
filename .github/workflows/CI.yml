@@ -445,7 +445,7 @@ jobs:
         sudo mkdir -p $CROSS_ROOT
         sudo debootstrap --variant=buildd --include=fakeroot,build-essential,ca-certificates,debian-archive-keyring,git,sudo --arch=${{ matrix.job.arch }} --foreign ${{ matrix.job.release }} $CROSS_ROOT $CROSS_MIRROR
         sudo mkdir -p $CROSS_ROOT/usr/bin
-        # TODO this is not fully portable across all architectures
+        # TODO this is not fully portable across all architectures, repeat for each arch we support
         sudo ln /usr/bin/qemu-arm-static $CROSS_ROOT/usr/bin/
         sudo chroot $CROSS_ROOT ./debootstrap/debootstrap --second-stage
         # don’t mount these until after the second stage of debootstrap has finished
@@ -469,10 +469,10 @@ jobs:
         sudo chmod 440 $CROSS_ROOT/etc/sudoers.d/lecture
         sudo ln -f /etc/sudoers $CROSS_ROOT/etc/sudoers
         # TODO disable sudo password prompt
-        # prepare bash wrapper
-        sudo cp .github/bash-wrapper /bin/
-        sudo chown root:root /bin/bash-wrapper
-        sudo chmod a+x /bin/bash-wrapper
+        # prepare bash wrapper for target architecture
+        sudo cp .github/bash-wrapper /bin/bash-${{ matrix.job.arch }}
+        sudo chown root:root /bin/bash-${{ matrix.job.arch }}
+        sudo chmod a+x /bin/bash-${{ matrix.job.arch }}
 
     - name: Create/configure any needed build/workspace
       shell: bash
@@ -494,7 +494,7 @@ jobs:
         sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
 
     - name: Set up OCaml ${{ matrix.job.ocaml-version }}
-      shell: bash-wrapper {0}
+      shell: bash-${{ matrix.job.arch }} {0}
       run: |
         #sudo apt-get -y --allow-unauthenticated install opam
         # Disable sandboxing as bwrap errors out on this setup
@@ -504,7 +504,7 @@ jobs:
         eval $(opam config env)
         opam install opam-depext
 
-    - shell: bash-wrapper {0}
+    - shell: bash-${{ matrix.job.arch }} {0}
       run: |
         opam exec -- make src OSTYPE=$OSTYPE UISTYLE=text STATIC=${{ steps.vars.outputs.STATIC }}
         # stage
@@ -516,11 +516,11 @@ jobs:
           fi
         done
 
-    - shell: bash-wrapper {0}
+    - shell: bash-${{ matrix.job.arch }} {0}
       run: opam exec -- make test
 
     - name: Run self-tests over local socket
-      shell: bash-wrapper {0}
+      shell: bash-${{ matrix.job.arch }} {0}
       run: |
         mkdir localsocket
         chmod 700 localsocket
@@ -534,11 +534,11 @@ jobs:
     - name: lablgtk install
       ## [2020-09] non-working for 32bit OCaml variant (see [GH:garrigue/lablgtk#64](https://github.com/garrigue/lablgtk/issues/64))
       if: ${{ !contains(matrix.job.ocaml-version, '+32bit') }}
-      shell: bash-wrapper {0}
+      shell: bash-${{ matrix.job.arch }} {0}
       run: opam depext --install --verbose --yes lablgtk3 && opam install ocamlfind
 
     - if: steps.vars.outputs.STATIC != 'true' ## unable to build static gtk/gui
-      shell: bash-wrapper {0}
+      shell: bash-${{ matrix.job.arch }} {0}
       run: |
         opam exec -- make src OSTYPE=$OSTYPE UISTYLE=gtk3 STATIC=${{ steps.vars.outputs.STATIC }}
         # stage
@@ -560,7 +560,7 @@ jobs:
 
     - name: Prepare package
       # if: steps.vars.outputs.DEPLOY
-      shell: bash-wrapper {0}
+      shell: bash-${{ matrix.job.arch }} {0}
       run: |
         ## package artifact(s)
         PKG_DIR='${{ steps.vars.outputs.PKG_DIR }}'

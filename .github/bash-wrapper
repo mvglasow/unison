@@ -1,13 +1,43 @@
 #!/bin/bash
 #
-# Wrapper to run bash in a chrooted QEMU user environment
+# NAME
+#
+#   bash-armhf - wrapper to run bash in a chrooted QEMU user environment.
+#
+# SYNOPSIS
+#
+#    bash-armhf <SCRIPT>
+#
+# DESCRIPTION
+#
+#   This script can be passed as a custom shell in order to run shell commands in a foreign chroot
+#   rather than on the host platform. The architecture is inferred from the name with which the script
+#   is called.
+#
+# BUGS
+#
+#   Only a handful environment variables (HOME, PROJECT_EXES, USER) are passed at the moment. Special character
+#   handling in environment variables is broken. This can be fixed by modifying the script itself.
 
-# FIXME get variables from outside
-CROSS_ROOT=/opt/chroot/armhf
+CROSS_ARCH=$(echo $0|sed "s/.*\///")
+
+# TODO remove after debug
+echo bash wrapper for $CROSS_ARCH
+
+CROSS_ROOT=/opt/chroot/$CROSS_ARCH
+
+# qemu-user-static binary names uses nonstandard arch names, therefore we need to map names explicitly
+case $CROSS_ARCH in
+  # TODO bail out if this is the same as the host arch
+  armhf)
+    CROSS_QUEMU=qemu-arm-static
+    ;;
+  # TODO error out if the arch is unknown
+esac
 
 # FIXME for some reasons, GHA passes scripts but does not set the executable flag,
 # so we need to work around this.
 test -f $1 && sudo chmod a+x $1
 
-sudo chroot --userspec=`whoami`:`whoami` $CROSS_ROOT qemu-arm-static /bin/bash -c "export HOME=$HOME; export PROJECT_EXES=\"$PROJECT_EXES\"; export USER=$USER; cd $GITHUB_WORKSPACE; $*"
+sudo chroot --userspec=`whoami`:`whoami` $CROSS_ROOT $CROSS_QUEMU /bin/bash -c "export HOME=$HOME; export PROJECT_EXES=\"$PROJECT_EXES\"; export USER=$USER; cd $GITHUB_WORKSPACE; $*"
 
