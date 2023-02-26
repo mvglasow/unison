@@ -497,7 +497,8 @@ jobs:
         # FIXME for some reason using variables does not work
         # FIXME this is not portable (works only on arm)
         #sudo chroot '${{ steps.vars.outputs.CROSS_ROOT }}' qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
-        sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
+        #sudo chroot /opt/chroot/${{ matrix.job.arch }} qemu-arm-static /bin/bash -c ' apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
+        sudo bash-wrapper 'apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
 
     - name: Set up OCaml ${{ matrix.job.ocaml-version }}
       shell: bash-wrapper {0}
