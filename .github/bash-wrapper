@@ -25,11 +25,20 @@ CROSS_ROOT=/opt/chroot/$CROSS_ARCH
 
 # qemu-user-static binary names uses nonstandard arch names, therefore we need to map names explicitly
 case $CROSS_ARCH in
+  $(uname -i))
+    echo "$CROSS_ARCH is the host architecture." > /dev/stderr
+    echo "This is currently not supported." > /dev/stderr
+    echo "However, you can run this command directly on the host machine." > /dev/stderr
+    exit 1
+    ;;
   # TODO bail out if this is the same as the host arch
   armhf)
     CROSS_QUEMU=qemu-arm-static
     ;;
-  # TODO error out if the arch is unknown
+  *)
+    echo "Unsupported architecture: $CROSS_ARCH" > /dev/stderr
+    exit 1
+    ;;
 esac
 
 # FIXME for some reasons, GHA passes scripts but does not set the executable flag,
