@@ -386,7 +386,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     env:
-      CROSS_ARCH=${{ matrix.job.arch }}
+      CROSS_ARCH: ${{ matrix.job.arch }}
 
     steps:
     - run: sudo apt-get update
