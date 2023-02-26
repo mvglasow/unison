@@ -381,9 +381,9 @@ jobs:
       fail-fast: false
       matrix:
         job:
-        - { release: bullseye  , arch: armhf  , ocaml-version: 4.14.0  , publish: true }
-        - { release: bullseye  , arch: amd64  , ocaml-version: 4.14.0  , publish: true }
-        - { release: bullseye  , arch: mipsel  , ocaml-version: 4.14.0  , publish: true }
+        - { arch: armhf  , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
+        - { arch: amd64  , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
+        - { arch: mipsel , ocaml-version: 4.14.0  , release: bullseye  , publish: true }
 
     runs-on: ubuntu-22.04
 
