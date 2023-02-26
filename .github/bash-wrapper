@@ -18,20 +18,19 @@
 #   Only a handful environment variables (HOME, PROJECT_EXES, USER) are passed at the moment. Special character
 #   handling in environment variables is broken. This can be fixed by modifying the script itself.
 
-# TODO remove after debug
-echo bash wrapper for $CROSS_ARCH
-
 CROSS_ROOT=/opt/chroot/$CROSS_ARCH
 
 # qemu-user-static binary names uses nonstandard arch names, therefore we need to map names explicitly
 case $CROSS_ARCH in
+  # FIXME this does not work as amd64 reports x86_64
   $(uname -i))
     echo "$CROSS_ARCH is the host architecture." > /dev/stderr
     echo "This is currently not supported." > /dev/stderr
     echo "However, you can run this command directly on the host machine." > /dev/stderr
     exit 1
     ;;
-  # TODO bail out if this is the same as the host arch
+  # TODO amd64  arm64    i386 mips64el mipsel ppc64el s390x
+  # QEMU x86_64 aarch64? i386 mips64el mipsel ppc64le s390x
   armhf)
     CROSS_QUEMU=qemu-arm-static
     ;;
