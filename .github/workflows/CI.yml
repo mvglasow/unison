@@ -374,8 +374,7 @@ jobs:
 
   cross_build:
     if: ${{ !cancelled() }}    # Don't fail if 'docs' failed
-    # Disable dependency for now, allowing us to start faster
-    # needs: docs
+    needs: docs
 
     strategy:
       fail-fast: false
@@ -388,9 +387,7 @@ jobs:
         # Most of these platforms are untested and unsupported.
         - { arch: arm64   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
         - { arch: armhf   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
-        - { arch: amd64   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
         - { arch: i386    , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
-        - { arch: m68k    , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
         - { arch: mips64el, ocaml-version: 4.14.1  , release: bullseye  , publish: true }
         - { arch: mipsel  , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
         - { arch: ppc64el , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
