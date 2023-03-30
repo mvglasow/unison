@@ -7,9 +7,7 @@
 #   provision-foreign-chroot.sh CROSS_ARCH
 #
 # DESCRIPTION
-#   This script sets up a foreign chroot environment for OCaml.
-#
-#   TODO Which OCaml versions are present, how are they selected etc?
+#   This script sets up a foreign chroot environment.
 #
 # OPTIONS
 #   CROSS_ARCH
@@ -49,11 +47,4 @@ mkdir -p $CROSS_ROOT/$HOME
 mount --bind $HOME $CROSS_ROOT/$HOME
 # TODO fix package authentication rather than using --allow-unauthenticated
 bash-wrapper 'apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
-bash-wrapper 'opam init -y --disable-sandboxing'
-bash-wrapper 'eval $(opam config env)'
-bash-wrapper "opam switch create . $OCAML_VERSION -y"
-bash-wrapper 'eval $(opam config env)'
-# which ocaml  # FIXME remove
-bash-wrapper 'ocaml -version'   # FIXME remove
-bash-wrapper 'opam install opam-depext'
 
