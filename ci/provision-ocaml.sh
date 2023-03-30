@@ -17,7 +17,7 @@
 OCAML_VERSION=$1
 bash-wrapper 'opam init -y --disable-sandboxing'
 bash-wrapper 'eval $(opam config env)'
-bash-wrapper "opam switch create . $OCAML_VERSION -y"
+bash-wrapper "opam switch create $OCAML_VERSION $OCAML_VERSION -y"
 bash-wrapper 'eval $(opam config env)'
 # which ocaml  # FIXME remove
 bash-wrapper 'ocaml -version'   # FIXME remove
