@@ -461,7 +461,7 @@ jobs:
         sudo chmod a+x /bin/bash-wrapper
         # run provisioning scripts
         sudo -E ci/images/debian/buster/provision-foreign-chroot.sh ${{ matrix.job.arch }}
-        ci/provision-ocaml ${{ steps.vars.outputs.OCAML_COMPILER }}
+        ci/provision-ocaml.sh ${{ steps.vars.outputs.OCAML_COMPILER }}
         # TODO as long as we don’t use sudo, this part can be skipped
         #sudo mkdir -p $CROSS_ROOT/etc/sudoers.d
         #echo 'Defaults	lecture = never' | sudo tee $CROSS_ROOT/etc/sudoers.d/lecture
