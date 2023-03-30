@@ -471,7 +471,6 @@ jobs:
         sudo mkdir -p $CROSS_ROOT/$HOME
         sudo mount --bind $HOME $CROSS_ROOT/$HOME
         sudo chown `whoami`:`whoami` $CROSS_ROOT/$HOME
-        popd
         # TODO as long as we don’t use sudo, this part can be skipped
         sudo mkdir -p $CROSS_ROOT/etc/sudoers.d
         echo 'Defaults	lecture = never' | sudo tee $CROSS_ROOT/etc/sudoers.d/lecture
