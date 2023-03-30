@@ -469,11 +469,8 @@ jobs:
         sudo ln -f /etc/passwd $CROSS_ROOT/etc/passwd
         sudo ln -f /etc/group $CROSS_ROOT/etc/group
         sudo mkdir -p $CROSS_ROOT/$HOME
-        sudo rm -Rf $CROSS_ROOT/$HOME
-        pushd /
-        sudo mv $HOME $CROSS_ROOT/$HOME
-        sudo ln -s $CROSS_ROOT/$HOME $HOME
-        sudo chown `whoami`:`whoami` $HOME
+        sudo mount --bind $HOME $CROSS_ROOT/$HOME
+        sudo chown `whoami`:`whoami` $CROSS_ROOT/$HOME
         popd
         # TODO as long as we don’t use sudo, this part can be skipped
         sudo mkdir -p $CROSS_ROOT/etc/sudoers.d
