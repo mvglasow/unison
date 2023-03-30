@@ -460,6 +460,7 @@ jobs:
         sudo cp .github/bash-wrapper /bin/bash-wrapper
         sudo chown root:root /bin/bash-wrapper
         sudo chmod a+x /bin/bash-wrapper
+        ls -la
         # run provisioning script
         sudo ci/images/debian/buster/provision-foreign-chroot.sh ${{ matrix.job.arch }}
         # TODO as long as we don’t use sudo, this part can be skipped
