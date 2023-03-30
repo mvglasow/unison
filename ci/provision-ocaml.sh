@@ -19,7 +19,8 @@ bash-wrapper 'opam init -y --disable-sandboxing'
 bash-wrapper 'eval $(opam config env)'
 bash-wrapper "opam switch create $OCAML_VERSION $OCAML_VERSION -y"
 bash-wrapper 'eval $(opam config env)'
+bash-wrapper 'opam install opam-depext'
 # which ocaml  # FIXME remove
 bash-wrapper 'ocaml -version'   # FIXME remove
-bash-wrapper 'opam install opam-depext'
+bash-wrapper 'opam switch list'   # FIXME remove
 
