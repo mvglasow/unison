@@ -39,11 +39,14 @@ mkdir -p $CROSS_ROOT/proc
 mount -B /proc $CROSS_ROOT/proc
 mkdir -p $CROSS_ROOT/sys
 mount -B /sys $CROSS_ROOT/sys
-# no need to replicate users, groups if running as root, only home dir is needed
+# replicate users and groups if we’re not running as root
+if [ $(whoami) != root ] ; then
+  sudo ln -f /etc/passwd $CROSS_ROOT/etc/passwd
+  sudo ln -f /etc/group $CROSS_ROOT/etc/group
+fi
+# home dir is needed in any case
 mkdir -p $CROSS_ROOT/$HOME
 mount --bind $HOME $CROSS_ROOT/$HOME
-pushd /
-popd
 # TODO fix package authentication rather than using --allow-unauthenticated
 bash-wrapper 'apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
 bash-wrapper 'opam init -y --disable-sandboxing'
@@ -52,4 +55,5 @@ bash-wrapper "opam switch create . $OCAML_VERSION -y"
 bash-wrapper 'eval $(opam config env)'
 # which ocaml  # FIXME remove
 bash-wrapper 'ocaml -version'   # FIXME remove
+bash-wrapper 'opam install opam-depext'
 
