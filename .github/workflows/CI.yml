@@ -386,12 +386,12 @@ jobs:
         # (although the rest of the VM environment is available)
         # Most of these platforms are untested and unsupported.
         - { arch: arm64   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
-        - { arch: armhf   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
-        - { arch: i386    , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
-        - { arch: mips64el, ocaml-version: 4.14.1  , release: bullseye  , publish: true }
-        - { arch: mipsel  , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
-        - { arch: ppc64el , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
-        - { arch: s390x   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        # { arch: armhf   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        # { arch: i386    , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        # { arch: mips64el, ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        # { arch: mipsel  , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        # { arch: ppc64el , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
+        # { arch: s390x   , ocaml-version: 4.14.1  , release: bullseye  , publish: true }
 
     runs-on: ubuntu-22.04
 
