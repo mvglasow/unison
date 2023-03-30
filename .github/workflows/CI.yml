@@ -447,40 +447,27 @@ jobs:
         COMPRESS_CMD='tar czf';
         outputs COMPRESS_CMD
 
-    - name: Set up foreign chroot for ${{ matrix.job.arch }}
+    - name: Set up foreign chroot for ${{ matrix.job.arch }} with OCaml ${{ matrix.job.ocaml-version }}
       shell: bash
       run: |
         outputs() { for var in "$@" ; do echo steps.vars.outputs.${var}="${!var}"; echo ::set-output name=${var}::${!var}; done; }
         CROSS_ROOT="/opt/chroot/${{ matrix.job.arch }}"
-        CROSS_MIRROR="http://deb.debian.org/debian/"
+        export CROSS_MIRROR="http://deb.debian.org/debian/"
+        export CROSS_RELEASE=${{ matrix.job.release }}
+        export OCAML_VERSION=${{ steps.vars.outputs.OCAML_COMPILER }}
         outputs CROSS_ROOT CROSS_MIRROR
-        sudo apt-get -y install debootstrap qemu-user-static binfmt-support
-        sudo mkdir -p $CROSS_ROOT
-        sudo debootstrap --variant=buildd --include=fakeroot,build-essential,ca-certificates,debian-archive-keyring,git,sudo --arch=${{ matrix.job.arch }} --foreign ${{ matrix.job.release }} $CROSS_ROOT $CROSS_MIRROR
-        sudo mkdir -p $CROSS_ROOT/usr/bin
-        sudo ln /usr/bin/qemu-*-static $CROSS_ROOT/usr/bin/
-        sudo chroot $CROSS_ROOT ./debootstrap/debootstrap --second-stage
-        # don’t mount these until after the second stage of debootstrap has finished
-        mkdir -p $CROSS_ROOT/proc
-        sudo mount -B /proc $CROSS_ROOT/proc
-        mkdir -p $CROSS_ROOT/sys
-        sudo mount -B /sys $CROSS_ROOT/sys
-        # we need to replicate users, groups and home dirs if we’re not running as root
-        sudo ln -f /etc/passwd $CROSS_ROOT/etc/passwd
-        sudo ln -f /etc/group $CROSS_ROOT/etc/group
-        sudo mkdir -p $CROSS_ROOT/$HOME
-        sudo mount --bind $HOME $CROSS_ROOT/$HOME
-        sudo chown `whoami`:`whoami` $CROSS_ROOT/$HOME
-        # TODO as long as we don’t use sudo, this part can be skipped
-        sudo mkdir -p $CROSS_ROOT/etc/sudoers.d
-        echo 'Defaults	lecture = never' | sudo tee $CROSS_ROOT/etc/sudoers.d/lecture
-        sudo chmod 440 $CROSS_ROOT/etc/sudoers.d/lecture
-        sudo ln -f /etc/sudoers $CROSS_ROOT/etc/sudoers
-        # TODO disable sudo password prompt
         # prepare bash wrapper for target architecture
         sudo cp .github/bash-wrapper /bin/bash-wrapper
         sudo chown root:root /bin/bash-wrapper
         sudo chmod a+x /bin/bash-wrapper
+        # run provisioning script
+        sudo ci/images/debian/buster/provision-foreign-chroot.sh ${{ matrix.job.arch }}
+        # TODO as long as we don’t use sudo, this part can be skipped
+        #sudo mkdir -p $CROSS_ROOT/etc/sudoers.d
+        #echo 'Defaults	lecture = never' | sudo tee $CROSS_ROOT/etc/sudoers.d/lecture
+        #sudo chmod 440 $CROSS_ROOT/etc/sudoers.d/lecture
+        #sudo ln -f /etc/sudoers $CROSS_ROOT/etc/sudoers
+        # TODO disable sudo password prompt
 
     - name: Create/configure any needed build/workspace
       shell: bash
@@ -489,26 +476,6 @@ jobs:
         mkdir -p '${{ steps.vars.outputs.STAGING_DIR }}'
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'
         mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'/bin
-
-    # TODO including these packages in debootstrap fails for some reason
-    # and to run sudo apt-get inside the chroot, we need to disable the password prompt.
-    # If we can fix either of these, we can merge the step into one of the others.
-    - name: Install opam and build dependencies
-      shell: bash
-      run: |
-        # TODO fix package authentication rather than using --allow-unauthenticated
-        sudo -E bash-wrapper 'apt-get -y --allow-unauthenticated install librsvg2-bin imagemagick opam libgtk-3-dev'
-
-    - name: Set up OCaml ${{ matrix.job.ocaml-version }}
-      shell: bash-wrapper {0}
-      run: |
-        #sudo apt-get -y --allow-unauthenticated install opam
-        # Disable sandboxing as bwrap errors out on this setup
-        opam init -y --disable-sandboxing
-        eval $(opam config env)
-        opam switch create . ${{ steps.vars.outputs.OCAML_COMPILER }} -y
-        eval $(opam config env)
-        opam install opam-depext
 
     - shell: bash-wrapper {0}
       run: |
